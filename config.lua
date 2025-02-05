@@ -1,3 +1,8 @@
+vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
+vim.o.foldcolumn = '1'
+vim.o.foldlevel = 99 -- Using ufo provider need a large value, feel free to decrease the value
+vim.o.foldlevelstart = 99
+vim.o.foldenable = true
 vim.o.clipboard = "unnamedplus"
 vim.o.number = true
 vim.o.expandtab = true
@@ -134,24 +139,53 @@ netrw_maps()
 lvim.plugins = {
   {'nanozuki/tabby.nvim'},
   {"kevinhwang91/nvim-ufo",
-      dependencies = {"kevinhwang91/promise-async"}
+    dependencies = {"kevinhwang91/promise-async"}
   },
-  {'prichrd/netrw.nvim', opts = {}}
+  {'prichrd/netrw.nvim', opts = {}},
+  {"dstein64/nvim-scrollview"},
+  {'nullromo/go-up.nvim',
+    opts = {}, -- specify options here
+    config = function(_, opts)
+    local goUp = require('go-up')
+    goUp.setup(opts)
+    end,
+  },
 }
 
--- ----------
+require('scrollview').setup({
+  excluded_filetypes = {'nerdtree'},
+  current_only = true,
+  base = 'buffer',
+  column = 80,
+  signs_on_startup = {'all'},
+  diagnostics_severities = {vim.diagnostic.severity.ERROR}
+})
 
 require("netrw").setup({})
 
--- ----------
+require'nvim-treesitter.configs'.setup {
+  ensure_installed = {},
+  sync_install = true,
+  auto_install = true,
+  ignore_install = {},
+  highlight = {
+    enable = true,
+    disable = function(lang, buf)
+      local max_filesize = 100 * 1024 -- 100 KB
+        local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
+        if ok and stats and stats.size > max_filesize then
+          return true
+      end
+    end,
+    additional_vim_regex_highlighting = true,
+  },
+}
 
 require('ufo').setup({
   provider_selector = function(bufnr, filetype, buftype)
     return {'treesitter', 'indent'}
     end
 })
-
--- ----------
 
 local theme = {
   fill = 'TabLineFill',
